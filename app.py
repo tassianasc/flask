@@ -1,34 +1,36 @@
-from flask import Flask, request
-from flask_mysqldb import MySQL
-import yaml
+from flask import Flask, request, render_template
+from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__,static_folder='public')
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:110328@localhost/formulario_flask_MySQL'
+db = SQLAlchemy(app)
 
-# Configuracao db
-db = yaml.safe_load(open('db.yaml'))
-app.config['MYSQL_HOST'] = db['mysql_host']
-app.config['MYSQL_USER'] = db['mysql_user']
-app.config['MYSQL_PASSWORD'] = db['mysql_password']
-app.config['MYSQL_DB'] = db['mysql_db']
+class Funcionario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    primeiro_nome = db.Column(db.String(80), nullable=False)
+    sobrenome = db.Column(db.String(80), nullable=False)
+    data_admissao = db.Column(db.Date, nullable=False)
+    id_setor = db.Column(db.String(80), nullable=False)
+    id_cargo = db.Column(db.String(80), nullable=False)
 
-mysql = MySQL(app)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route('/add', methods=['GET','POST'])
-def add():
-  if request.method=='POST':
-    user_details = request.form
-    primeiro_nome = user_details['primeiro_nome']
-    sobrenome = user_details['sobrenome']
-    data_admissao = user_details['data_admissao']
-    id_setor = user_details['id_setor']
-    id_cargo = user_details['id_cargo']
-    cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO funcionario(primeiro_nome, sobrenome, data_admissao, id_setor, id_cargo) VALUES(%s, %s, %s, %s, %s)", (primeiro_nome, sobrenome, data_admissao, id_setor, id_cargo))
-    mysql.connection.commit()
-    cur.close()
-    return 'success'
-  return 'OK,GET'
-    
+@app.route('/add', methods=['POST'])
+def add_funcionario():
+    funcionario = Funcionario(
+        primeiro_nome=request.form['primeiro_nome'],
+        sobrenome=request.form['sobrenome'],
+        data_admissao=request.form['data_admissao'],
+        id_setor=request.form['id_setor'],
+        id_cargo=request.form['id_cargo']
+    )
+    db.session.add(funcionario)
+    db.session.commit()
+    return 'Funcionário adicionado com sucesso!'
 
 if __name__ == '__main__':
-  app.run(debug=True)
+    with app.app_context():
+        db.create_all()  # Cria todas as tabelas definidas pelos modelos
+    app.run(debug=True)
