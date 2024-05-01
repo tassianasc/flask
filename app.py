@@ -2,7 +2,7 @@ from flask import Flask, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:110328@localhost/formulario_flask_MySQL'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:4459@localhost/formulario_flask_MySQL'
 db = SQLAlchemy(app)
 
 class Funcionario(db.Model):
